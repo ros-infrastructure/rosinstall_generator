@@ -138,7 +138,7 @@ def _generate_rosinstall(local_name, url, release_tag, tar=False, vcs_type=None)
     if tar:
         # Github tarball:    https://github.com/ros/ros_comm/archive/1.11.20.tar.gz
         # Bitbucket tarball: https://bitbucket.org/osrf/gazebo/get/gazebo7_7.3.1.tar.gz
-        # Gitlab tarball:    http://gitlab.example.com/org/repo/repository/archive.tar.gz?ref=0.5.3
+        # Gitlab tarball:    https://gitlab.com/gitlab-org/gitlab-ce/repository/archive.tar.gz?ref=master
         match = re.match('(?:https?:\/\/|ssh:\/\/|git:\/\/|git@)([\w.-]+)[:/]([\w/-]*)(?:\.git)?$', url)
 
         if match:
