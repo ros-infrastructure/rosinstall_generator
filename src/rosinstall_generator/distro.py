@@ -139,7 +139,7 @@ def _generate_rosinstall(local_name, url, release_tag, tar=False, vcs_type=None)
         # Github tarball:    https://github.com/ros/ros_comm/archive/1.11.20.tar.gz
         # Bitbucket tarball: https://bitbucket.org/osrf/gazebo/get/gazebo7_7.3.1.tar.gz
         # Gitlab tarball:    https://gitlab.com/gitlab-org/gitlab-ce/repository/archive.tar.gz?ref=master
-        match = re.match('(?:https?:\/\/|ssh:\/\/|git:\/\/|git@)([\w.-]+)[:/]([\w/-]*)(?:\.git)?$', url)
+        match = re.match('(?:\w+:\/\/|git@)([\w.-]+)[:/]([\w/-]*)(?:\.git)?$', url)
 
         if match:
             server, repo_path = match.groups()
@@ -155,13 +155,13 @@ def _generate_rosinstall(local_name, url, release_tag, tar=False, vcs_type=None)
                         'uri': tarball_url_template.format(server, repo_path, release_tag),
                         'version': '{0}-{1}'.format(os.path.basename(repo_path), release_tag.replace('/', '-'))
                     }}]
-            logger.log(logging.WARN, 'Tarball requested for repo {0}, but git server {1} is unrecognized. '.format(
+            logger.log(logging.WARN, "Tarball requested for repo '{0}', but git server '{1}' is unrecognized.".format(
                 local_name, server))
         else:
-            logger.log(logging.WARN, 'Tarball requested for repo {0}, but I can\'t parse git URL {1}. '.format(
+            logger.log(logging.WARN, "Tarball requested for repo '{0}', but I can't parse git URL '{1}'.".format(
                 local_name, url))
 
-        logger.log(logging.WARN, 'Falling back on git clone for repo {0}'.format(local_name))
+        logger.log(logging.WARN, "Falling back on git clone for repo '{0}'.".format(local_name))
 
     return [{ vcs_type or 'git': {
         'local-name': local_name,
