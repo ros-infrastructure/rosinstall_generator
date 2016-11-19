@@ -7,8 +7,7 @@ python:
   - "3.3"
 
 install:
-  - pip install https://github.com/ros-infrastructure/rosdistro/archive/master.tar.gz
-  - pip install argparse catkin-pkg rospkg PyYAML setuptools coverage
+  - pip install argparse catkin-pkg rosdistro rospkg PyYAML setuptools coverage
 
 script:
   - nosetests --with-coverage
