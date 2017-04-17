@@ -191,8 +191,6 @@ _packages_in_environment = None
 def _get_packages_in_environment():
     global _packages_in_environment
     if _packages_in_environment is None:
-        if ROS_PACKAGE_PATH not in os.environ or not os.environ[ROS_PACKAGE_PATH]:
-            raise RuntimeError("The environment variable '%s' must be set when using '%s'" % (ROS_PACKAGE_PATH, ARG_CURRENT_ENVIRONMENT))
         _packages_in_environment = set([])
         rs = RosStack()
         _packages_in_environment.update(set(rs.list()))
