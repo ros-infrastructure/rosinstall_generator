@@ -117,7 +117,7 @@ def _classify_names(distro_name, names, source=False):
     # identify wet packages
     if unknown_names:
         wet_distro = get_wet_distro(distro_name)
-        packages = wet_distro.source_packages if source else wet_distro.release_packages
+        packages = wet_distro.source_packages if source and wet_distro.source_packages else wet_distro.release_packages
         for name in unknown_names:
             if name in packages:
                 wet_package_names.add(name)
@@ -410,7 +410,7 @@ def generate_rosinstall(distro_name, names,
             # determine repositories based on package names and passed in repository names
             repos = {}
             for pkg_name in result.wet_package_names:
-                if upstream_source_version:
+                if upstream_source_version and wet_distro.source_packages:
                     pkg = wet_distro.source_packages[pkg_name]
                     repos[pkg.repository_name] = wet_distro.repositories[pkg.repository_name]
                 else:
