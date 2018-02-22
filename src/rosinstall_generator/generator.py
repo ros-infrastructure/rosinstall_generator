@@ -93,16 +93,10 @@ def _get_packages_for_repos(distro_name, repo_names, source=False):
     wet_distro = get_wet_distro(distro_name)
     for repo_name in repo_names:
         if source:
-            # Returns a dict which maps package names to their package XML strings as stored in the cache,
-            # and also includes a special "_ref" key which stores the SHA of the repo state which corresponds
-            # to when these versions of the package.xml strings were captured.
+            # Returns a mapping of package names to package XML strings in particular repo.
             source_package_xmls = wet_distro.get_source_repo_package_xmls(repo_name)
         if source and source_package_xmls:
-            source_package_names = source_package_xmls.keys()
-            # Remove the unneeded _ref key from the dict, since it does not correspond to an actual package
-            # name. See: https://github.com/ros-infrastructure/rosdistro/issues/116
-            source_package_names.remove("_ref")
-            package_names.update(source_package_names)
+            package_names.update(source_package_xmls.keys())
         else:
             release_repo = wet_distro.repositories[repo_name].release_repository
             if release_repo:
