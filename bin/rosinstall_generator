@@ -17,6 +17,21 @@ def _existing_directory(path):
     return path
 
 
+def _rosinstall_to_vcstool(rosinstall_data):
+    repositories = {}
+    for rosinstall in rosinstall_data:
+        key, value = rosinstall.popitem()
+        repositories.update({
+            value['local-name']: {
+                'type': key,
+                'url': value['uri'],
+                'version': value['version']
+            }
+        })
+
+    return {'repositories': repositories}
+
+
 def main(argv=sys.argv[1:]):
     distro_name = os.environ['ROS_DISTRO'] if 'ROS_DISTRO' in os.environ else None
     parser = argparse.ArgumentParser(
@@ -72,6 +87,9 @@ def main(argv=sys.argv[1:]):
 
     parser.add_argument('--tar', action='store_true', default=False,
         help='Use tarballs instead of repositories for catkin packages (rosbuild stacks are always tarballs)')
+
+    parser.add_argument('--vcstool', action='store_true', default=False,
+        help='Convert to vcstool format before output)')
 
     args = parser.parse_args(argv)
 
@@ -133,6 +151,9 @@ def main(argv=sys.argv[1:]):
         print(str(e), file=sys.stderr)
         return 1
     rosinstall_data = sort_rosinstall(rosinstall_data)
+
+    if args.vcstool:
+        rosinstall_data = _rosinstall_to_vcstool(rosinstall_data)
     print(yaml.safe_dump(rosinstall_data, default_flow_style=False))
     return 0
 
