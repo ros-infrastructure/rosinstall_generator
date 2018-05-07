@@ -24,7 +24,6 @@ setup(
     maintainer='Dirk Thomas',
     maintainer_email='dthomas@osrfoundation.org',
     url='http://wiki.ros.org/rosinstall_generator',
-    download_url='http://download.ros.org/downloads/rosinstall_generator/',
     keywords=['ROS'],
     classifiers=['Programming Language :: Python',
                  'License :: OSI Approved :: BSD License',
