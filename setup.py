@@ -14,7 +14,9 @@ setup(
     install_requires=install_requires,
     packages=find_packages('src'),
     package_dir={'': 'src'},
-    scripts=['bin/rosinstall_generator'],
+    entry_points = {
+        'console_scripts': ['rosinstall_generator=rosinstall_generator.cli:main'],
+    },
     author='Dirk Thomas',
     author_email='dthomas@osrfoundation.org',
     maintainer='Dirk Thomas',
