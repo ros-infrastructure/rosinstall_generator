@@ -4,7 +4,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-install_requires=['catkin_pkg >= 0.1.28', 'rosdistro >= 0.6.8', 'rospkg', 'PyYAML', 'setuptools']
+install_requires=['catkin_pkg >= 0.1.28', 'rosdistro >= 0.7.3', 'rospkg', 'PyYAML', 'setuptools']
 
 exec(open(os.path.join(os.path.dirname(__file__), 'src', 'rosinstall_generator', '__init__.py')).read())
 
