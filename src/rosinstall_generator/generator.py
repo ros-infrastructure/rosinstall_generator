@@ -87,10 +87,12 @@ def _classify_repo_names(distro_name, repo_names):
     return names, unknown_names
 
 
-def _get_packages_for_repos(distro_name, repo_names, source=False):
+def _get_packages_for_repos(distro_name, repo_names, keywords, source=False):
     package_names = set([])
     unreleased_repo_names = set([])
     wet_distro = get_wet_distro(distro_name)
+    if ARG_ALL_PACKAGES in keywords:
+        repo_names = wet_distro.repositories.keys()
     for repo_name in repo_names:
         if source:
             # Returns a mapping of package names to package XML strings in particular repo.
@@ -249,11 +251,14 @@ def generate_rosinstall(distro_name, names,
         logger.debug("The following wet packages found in '--from-path' will be considered: %s" % ', '.join(sorted(include_names_from_path)))
         names.update(include_names_from_path)
 
+    # Allow special keywords in repos (like ALL)
+    repo_names, keywords = _split_special_keywords(repo_names or [])
+
     # expand repository names into package names
     repo_names, unknown_repo_names = _classify_repo_names(distro_name, repo_names)
     if unknown_repo_names:
         logger.warn('The following unknown repositories will be ignored: %s' % (', '.join(sorted(unknown_repo_names))))
-    wet_package_names, unreleased_repo_names = _get_packages_for_repos(distro_name, repo_names, source=upstream_source_version)
+    wet_package_names, unreleased_repo_names = _get_packages_for_repos(distro_name, repo_names, keywords, source=upstream_source_version)
     names.update(wet_package_names)
     if unreleased_repo_names and not upstream_version_tag and not upstream_source_version:
         logger.warn('The following unreleased repositories will be ignored: %s' % ', '.join(sorted(unreleased_repo_names)))
@@ -419,6 +424,9 @@ def generate_rosinstall(distro_name, names,
                         release_repo = repo.release_repository
                         assert not upstream_version_tag or release_repo.version is not None, "Package '%s' in repository '%s' does not have a release version" % (pkg_name, pkg.repository_name)
                         repos[pkg.repository_name] = repo
+            # If asked to get upstream development then the release state doesn't matter
+            if upstream_source_version:
+                repo_names = repo_names.union(unreleased_repo_names)
             for repo_name in repo_names:
                 if repo_name not in repos:
                     repos[repo_name] = wet_distro.repositories[repo_name]
