@@ -249,6 +249,15 @@ def generate_rosinstall(distro_name, names,
         logger.debug("The following wet packages found in '--from-path' will be considered: %s" % ', '.join(sorted(include_names_from_path)))
         names.update(include_names_from_path)
 
+    # Allow special keywords in repos
+    repo_names, keywords = _split_special_keywords(repo_names or [])
+    if set(keywords).difference(set([ARG_ALL_PACKAGES])):
+        raise RuntimeError('The only keyword supported by repos is %r' % (ARG_ALL_PACKAGES))
+
+    if ARG_ALL_PACKAGES in keywords:
+        wet_distro = get_wet_distro(distro_name)
+        repo_names = wet_distro.repositories.keys()
+
     # expand repository names into package names
     repo_names, unknown_repo_names = _classify_repo_names(distro_name, repo_names)
     if unknown_repo_names:
@@ -419,6 +428,9 @@ def generate_rosinstall(distro_name, names,
                         release_repo = repo.release_repository
                         assert not upstream_version_tag or release_repo.version is not None, "Package '%s' in repository '%s' does not have a release version" % (pkg_name, pkg.repository_name)
                         repos[pkg.repository_name] = repo
+            # If asked to get upstream development then the release state doesn't matter
+            if upstream_source_version:
+                repo_names = repo_names.union(unreleased_repo_names)
             for repo_name in repo_names:
                 if repo_name not in repos:
                     repos[repo_name] = wet_distro.repositories[repo_name]
