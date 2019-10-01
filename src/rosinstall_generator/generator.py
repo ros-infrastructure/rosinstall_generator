@@ -212,6 +212,12 @@ def _get_package_names(path):
     return set([pkg.name for _, pkg in find_packages_allowing_duplicates(path).items()])
 
 
+def _merge_two_keywords(x, y):
+    z = x.copy()
+    z = z.update(y)
+    return z
+
+
 _wet_distro = None
 _dry_distro = None
 
@@ -240,7 +246,7 @@ def generate_rosinstall(distro_name, names,
     upstream_version_tag=False, upstream_source_version=False):
 
     # classify package/stack names
-    names, keywords = _split_special_keywords(names)
+    names, pkg_keywords = _split_special_keywords(names)
 
     # find packages recursively in include paths
     if from_paths:
@@ -250,7 +256,8 @@ def generate_rosinstall(distro_name, names,
         names.update(include_names_from_path)
 
     # Allow special keywords in repos
-    repo_names, keywords = _split_special_keywords(repo_names or [])
+    repo_names, repo_keywords = _split_special_keywords(repo_names or [])
+    keywords = _merge_two_keywords(pkg_keywords, repo_keywords)
     if set(keywords).difference(set([ARG_ALL_PACKAGES])):
         raise RuntimeError('The only keyword supported by repos is %r' % (ARG_ALL_PACKAGES))
 
