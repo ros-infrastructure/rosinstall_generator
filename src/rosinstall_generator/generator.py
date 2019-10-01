@@ -240,7 +240,7 @@ def generate_rosinstall(distro_name, names,
     upstream_version_tag=False, upstream_source_version=False):
 
     # classify package/stack names
-    names, keywords = _split_special_keywords(names)
+    names, pkg_keywords = _split_special_keywords(names)
 
     # find packages recursively in include paths
     if from_paths:
@@ -250,11 +250,11 @@ def generate_rosinstall(distro_name, names,
         names.update(include_names_from_path)
 
     # Allow special keywords in repos
-    repo_names, keywords = _split_special_keywords(repo_names or [])
-    if set(keywords).difference(set([ARG_ALL_PACKAGES])):
+    repo_names, repo_keywords = _split_special_keywords(repo_names or [])
+    if set(repo_keywords).difference(set([ARG_ALL_PACKAGES])):
         raise RuntimeError('The only keyword supported by repos is %r' % (ARG_ALL_PACKAGES))
 
-    if ARG_ALL_PACKAGES in keywords:
+    if ARG_ALL_PACKAGES in repo_keywords:
         wet_distro = get_wet_distro(distro_name)
         repo_names = wet_distro.repositories.keys()
 
@@ -273,8 +273,8 @@ def generate_rosinstall(distro_name, names,
     names, unknown_names = _classify_names(distro_name, names, source=upstream_source_version)
     if unknown_names:
         logger.warn('The following unreleased packages/stacks will be ignored: %s' % (', '.join(sorted(unknown_names))))
-    if keywords:
-        expanded_names, unknown_names = _classify_names(distro_name, _expand_keywords(distro_name, keywords), source=upstream_source_version)
+    if pkg_keywords:
+        expanded_names, unknown_names = _classify_names(distro_name, _expand_keywords(distro_name, pkg_keywords), source=upstream_source_version)
         if unknown_names:
             logger.warn('The following unreleased packages/stacks from the %s will be ignored: %s' % (ROS_PACKAGE_PATH, ', '.join(sorted(unknown_names))))
         names.update(expanded_names)
@@ -286,12 +286,12 @@ def generate_rosinstall(distro_name, names,
         logger.debug('Unreleased repositories: %s' % ', '.join(sorted(unreleased_repo_names)))
 
     # classify deps-up-to
-    deps_up_to_names, keywords = _split_special_keywords(deps_up_to or [])
+    deps_up_to_names, deps_keywords = _split_special_keywords(deps_up_to or [])
     deps_up_to_names, unknown_names = _classify_names(distro_name, deps_up_to_names, source=upstream_source_version)
     if unknown_names:
         logger.warn("The following unreleased '--deps-up-to' packages/stacks will be ignored: %s" % (', '.join(sorted(unknown_names))))
-    if keywords:
-        expanded_names, unknown_names = _classify_names(distro_name, _expand_keywords(distro_name, keywords), source=upstream_source_version)
+    if deps_keywords:
+        expanded_names, unknown_names = _classify_names(distro_name, _expand_keywords(distro_name, deps_keywords), source=upstream_source_version)
         if unknown_names:
             logger.warn("The following unreleased '--deps-up-to' packages/stacks from the %s will be ignored: %s" % (ROS_PACKAGE_PATH, ', '.join(sorted(unknown_names))))
         deps_up_to_names.update(expanded_names)
@@ -299,7 +299,7 @@ def generate_rosinstall(distro_name, names,
         logger.debug('Dependencies up to: %s' % ', '.join(sorted(deps_up_to_names.wet_package_names | deps_up_to_names.dry_stack_names)))
 
     # classify excludes
-    exclude_names, keywords = _split_special_keywords(excludes or [])
+    exclude_names, excludes_keywords = _split_special_keywords(excludes or [])
     if exclude_paths:
         exclude_names_from_path = set([])
         [exclude_names_from_path.update(_get_package_names(exclude_path)) for exclude_path in exclude_paths]
@@ -308,8 +308,8 @@ def generate_rosinstall(distro_name, names,
     exclude_names, unknown_names = _classify_names(distro_name, exclude_names, source=upstream_source_version)
     if unknown_names:
         logger.warn("The following unreleased '--exclude' packages/stacks will be ignored: %s" % (', '.join(sorted(unknown_names))))
-    if keywords:
-        expanded_names, unknown_names = _classify_names(distro_name, _expand_keywords(distro_name, keywords), source=upstream_source_version)
+    if excludes_keywords:
+        expanded_names, unknown_names = _classify_names(distro_name, _expand_keywords(distro_name, excludes_keywords), source=upstream_source_version)
         exclude_names.update(expanded_names)
     if excludes:
         logger.debug('Excluded packages/stacks: %s' % ', '.join(sorted(exclude_names.wet_package_names | exclude_names.dry_stack_names)))
