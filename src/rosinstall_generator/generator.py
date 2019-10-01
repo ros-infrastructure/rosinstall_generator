@@ -257,10 +257,10 @@ def generate_rosinstall(distro_name, names,
 
     # Allow special keywords in repos
     repo_names, repo_keywords = _split_special_keywords(repo_names or [])
-    keywords = _merge_two_keywords(pkg_keywords, repo_keywords)
-    if set(keywords).difference(set([ARG_ALL_PACKAGES])):
+    if set(repo_keywords).difference(set([ARG_ALL_PACKAGES])):
         raise RuntimeError('The only keyword supported by repos is %r' % (ARG_ALL_PACKAGES))
 
+    keywords = _merge_two_keywords(pkg_keywords, repo_keywords)
     if ARG_ALL_PACKAGES in keywords:
         wet_distro = get_wet_distro(distro_name)
         repo_names = wet_distro.repositories.keys()
