@@ -142,7 +142,7 @@ def _generate_rosinstall_for_package(distro, pkg_name, flat=False, tar=False):
     if not flat and repo.package_names != [pkg_name]:
         local_name = '%s/%s' % (repo.name, local_name)
     release_tag = get_release_tag(repo, pkg_name)
-    return _generate_rosinstall(local_name, repo.url, release_tag, tar=tar)
+    return _generate_rosinstall(local_name, repo.url, release_tag, tar=tar, vcs_type=repo.type)
 
 
 def _generate_rosinstall(local_name, url, release_tag, tar=False, vcs_type=None):
