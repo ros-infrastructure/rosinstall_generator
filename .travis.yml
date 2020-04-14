@@ -10,6 +10,7 @@ python:
   - "3.8"
 
 install:
+  - if [ $TRAVIS_PYTHON_VERSION == "3.4" ]; then pip install PyYAML==5.2; fi
   - pip install argparse catkin-pkg rosdistro rospkg PyYAML setuptools coverage
 
 script:
