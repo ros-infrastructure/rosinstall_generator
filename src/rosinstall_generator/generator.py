@@ -93,6 +93,8 @@ def _get_packages_for_repos(distro_name, repo_names, source=False):
     wet_distro = get_wet_distro(distro_name)
     for repo_name in repo_names:
         if source:
+            if not wet_distro.repositories[repo_name].source_repository:
+                continue
             # Returns a mapping of package names to package XML strings in particular repo.
             source_package_xmls = wet_distro.get_source_repo_package_xmls(repo_name)
         if source and source_package_xmls:
