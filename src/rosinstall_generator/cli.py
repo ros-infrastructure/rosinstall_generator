@@ -104,6 +104,9 @@ def main(argv=sys.argv[1:]):
     parser.add_argument('--tar', action='store_true', default=False,
         help='Use tarballs instead of repositories for catkin packages (rosbuild stacks are always tarballs)')
 
+    parser.add_argument('--format', choices=('rosinstall', 'repos'), default='rosinstall',
+        help='Output the repository information in .rosinstall or .repos format')
+
     args = parser.parse_args(argv)
 
     # check for invalid combinations
@@ -163,6 +166,24 @@ def main(argv=sys.argv[1:]):
             raise
         print(str(e), file=sys.stderr)
         return 1
-    rosinstall_data = sort_rosinstall(rosinstall_data)
+    if args.format == 'rosinstall':
+        rosinstall_data = sort_rosinstall(rosinstall_data)
+    elif args.format == 'repos':
+        # convert data into .repos format
+        repos_data = {}
+        for data in rosinstall_data:
+            assert len(data) == 1
+            type_ = list(data.keys())[0]
+            repo_data = data[type_]
+            assert repo_data['local-name'] not in repos_data, 'Multiple entries with the local-name: ' + repo_data['local-name']
+            repos_data[repo_data['local-name']] = {
+                'type': type_,
+                'url': repo_data['uri'],
+            }
+            if 'version' in repo_data and type_ != 'tar':
+                repos_data[repo_data['local-name']]['version'] = repo_data['version']
+        rosinstall_data = repos_data
+    else:
+        assert False, 'Unhandled format: ' + args.format
     print(yaml.safe_dump(rosinstall_data, default_flow_style=False))
     return 0
