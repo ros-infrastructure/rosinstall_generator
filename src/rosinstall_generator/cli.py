@@ -63,7 +63,7 @@ def main(argv=sys.argv[1:]):
     parser.add_argument('--from-path', type=_existing_directory, nargs='*',
         help="Add a set of catkin packages found recursively under the given path as if they would have been passed as 'package_names'.")
     parser.add_argument('--repos', nargs='*', metavar='reponame',
-        help='Repository names containing catkin packages.')
+        help="Repository names containing catkin packages. Use '%s' to specify all release packages (only usable as a single argument)." % ARG_ALL_PACKAGES)
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--upstream', action='store_true', default=False,
