@@ -182,7 +182,7 @@ def main(argv=sys.argv[1:]):
             }
             if 'version' in repo_data and type_ != 'tar':
                 repos_data[repo_data['local-name']]['version'] = repo_data['version']
-        rosinstall_data = repos_data
+        rosinstall_data = {'repositories': repos_data}
     else:
         assert False, 'Unhandled format: ' + args.format
     print(yaml.safe_dump(rosinstall_data, default_flow_style=False))
