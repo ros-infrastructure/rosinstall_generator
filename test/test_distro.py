@@ -91,11 +91,11 @@ def test_generate_tar():
 
     d.repositories['riverdale'].release_repository.url = 'https://gitlab.example.com/example/riverdale-release.git'
     r = generate_rosinstall(d, ['archie'], tar=True)[0]
-    assert r['tar']['uri'] == 'https://gitlab.example.com/example/riverdale-release/repository/archive.tar.gz?ref=release/indigo/archie/1.2.3-0'
+    assert r['tar']['uri'] == 'https://gitlab.example.com/example/riverdale-release/-/archive/release/indigo/archie/1.2.3-0/riverdale-release-release-indigo-archie-1.2.3-0.tar.gz'
 
 
 def test_generate_tar_from_ssh():
     d = _get_test_dist()
     d.repositories['riverdale'].release_repository.url = 'git@gitlab.example.com:example/riverdale-release.git'
     r = generate_rosinstall(d, ['archie'], tar=True)[0]
-    assert r['tar']['uri'] == 'https://gitlab.example.com/example/riverdale-release/repository/archive.tar.gz?ref=release/indigo/archie/1.2.3-0'
+    assert r['tar']['uri'] == 'https://gitlab.example.com/example/riverdale-release/-/archive/release/indigo/archie/1.2.3-0/riverdale-release-release-indigo-archie-1.2.3-0.tar.gz'

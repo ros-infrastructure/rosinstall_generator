@@ -151,22 +151,23 @@ def _generate_rosinstall(local_name, url, release_tag, tar=False, vcs_type=None)
     if tar:
         # Github tarball:    https://github.com/ros/ros_comm/archive/1.11.20.tar.gz
         # Bitbucket tarball: https://bitbucket.org/osrf/gazebo/get/gazebo7_7.3.1.tar.gz
-        # Gitlab tarball:    https://gitlab.com/gitlab-org/gitlab-ce/repository/archive.tar.gz?ref=master
-        match = re.match('(?:\w+:\/\/|git@)([\w.-]+)[:/]([\w/-]*)(?:\.git)?$', url)
+        # Gitlab tarball:    https://gitlab.com/gitlab-org/gitlab-foss/-/archive/v13.10.2/gitlab-foss-v13.10.2.tar.gz
+        match = re.match('(?:\w+:\/\/|git@)([\w.-]+)[:/]([\w-]*)/([\w-]*)(?:\.git)?$', url)
 
         if match:
-            server, repo_path = match.groups()
+            server, repo_owner, repo_name = match.groups()
             url_templates = {
-                'github': 'https://{0}/{1}/archive/{2}.tar.gz',
-                'bitbucket': 'https://{0}/{1}/get/{2}.tar.gz',
-                'gitlab': 'https://{0}/{1}/repository/archive.tar.gz?ref={2}'
+                'github': 'https://{0}/{1}/{2}/archive/{3}.tar.gz',
+                'bitbucket': 'https://{0}/{1}/{2}/get/{3}.tar.gz',
+                'gitlab': 'https://{0}/{1}/{2}/-/archive/{3}/{2}-{4}.tar.gz'
             }
             for server_key, tarball_url_template in url_templates.items():
                 if server_key in server:
+                    release_tag_dashes = release_tag.replace('/', '-')
                     return [{ 'tar': {
                         'local-name': local_name,
-                        'uri': tarball_url_template.format(server, repo_path, release_tag),
-                        'version': '{0}-{1}'.format(os.path.basename(repo_path), release_tag.replace('/', '-'))
+                        'uri': tarball_url_template.format(server, repo_owner, repo_name, release_tag, release_tag_dashes),
+                        'version': '{0}-{1}'.format(os.path.basename(repo_name), release_tag_dashes)
                     }}]
             logger.log(logging.WARN, "Tarball requested for repo '{0}', but git server '{1}' is unrecognized.".format(
                 local_name, server))
