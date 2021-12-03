@@ -1,0 +1,33 @@
+name: rosinstall-generator-ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+    build:
+      strategy:
+        matrix:
+          os: [ubuntu-latest, macos-latest]
+          python: [3.7, 3.8, 3.9]
+          include:
+          - os: ubuntu-18.04
+            python: 2.7
+          - os: ubuntu-18.04
+            python: 3.6
+      name: rosinstall_generator tests
+      runs-on: ${{matrix.os}}
+
+      steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{matrix.python}}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{matrix.python}}
+      - name: Install dependencies
+        run: |
+          python -m pip install argparse catkin-pkg nose rosdistro rospkg PyYAML setuptools coverage
+      - name: Run tests
+        run: |
+          python -m nose --with-coverage
