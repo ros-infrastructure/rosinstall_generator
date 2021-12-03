@@ -53,7 +53,7 @@ def _get_test_dist():
       type: distribution
       version: 2
     '''
-    return DistributionFile('test', yaml.load(test_dist_yaml))
+    return DistributionFile('test', yaml.load(test_dist_yaml, Loader=yaml.SafeLoader))
 
 
 def test_get_package_names():
