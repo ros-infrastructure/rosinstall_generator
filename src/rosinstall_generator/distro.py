@@ -152,12 +152,10 @@ def _generate_rosinstall(local_name, url, release_tag, tar=False, vcs_type=None)
         # Github tarball:    https://github.com/ros/ros_comm/archive/1.11.20.tar.gz
         # Bitbucket tarball: https://bitbucket.org/osrf/gazebo/get/gazebo7_7.3.1.tar.gz
         # Gitlab tarball:    https://gitlab.com/gitlab-org/gitlab-ce/-/archive/master/archive.tar.gz
-        match = re.match('(?:\w+:\/\/|git@)([\w.-]+)[:/]([\w./-]*)(?:\.git)?$', url)
+        match = re.match('(?:\w+:\/\/|git@)([\w.-]+)[:/]([\w./-]*?)(?:\.git)?$', url)
 
         if match:
             server, repo_path = match.groups()
-            if repo_path.endswith('.git'):
-                repo_path = repo_path[:-4]
             url_templates = {
                 'github': 'https://{0}/{1}/archive/{2}.tar.gz',
                 'bitbucket': 'https://{0}/{1}/get/{2}.tar.gz',
