@@ -156,6 +156,8 @@ def _generate_rosinstall(local_name, url, release_tag, tar=False, vcs_type=None)
 
         if match:
             server, repo_path = match.groups()
+            if repo_path.endswith('.git'):
+                repo_path = repo_path[:-4]
             url_templates = {
                 'github': 'https://{0}/{1}/archive/{2}.tar.gz',
                 'bitbucket': 'https://{0}/{1}/get/{2}.tar.gz',
