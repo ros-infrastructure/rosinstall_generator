@@ -81,9 +81,9 @@ def test_generate_tar():
     r = generate_rosinstall(d, ['archie'], tar=True)[0]
     assert 'tar' not in r
 
-    d.repositories['riverdale'].release_repository.url = 'https://github.com/example/riverdale-release.git'
+    d.repositories['riverdale'].release_repository.url = 'https://github.com/example/riverdale.withdot-release.git'
     r = generate_rosinstall(d, ['archie'], tar=True)[0]
-    assert r['tar']['uri'] == 'https://github.com/example/riverdale-release/archive/release/indigo/archie/1.2.3-0.tar.gz'
+    assert r['tar']['uri'] == 'https://github.com/example/riverdale.withdot-release/archive/release/indigo/archie/1.2.3-0.tar.gz'
 
     d.repositories['riverdale'].release_repository.url = 'https://bitbucket.org/example/riverdale-release.git'
     r = generate_rosinstall(d, ['archie'], tar=True)[0]
