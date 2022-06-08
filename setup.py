@@ -22,6 +22,12 @@ setup(
     author='Dirk Thomas',
     author_email='dthomas@osrfoundation.org',
     maintainer='ROS Infrastructure Team',
+    project_urls={
+        'Source code':
+        'https://github.com/ros-infrastructure/rosinstall_generator',
+        'Issue tracker':
+        'https://github.com/ros-infrastructure/rosinstall_generator/issues',
+    },
     url='http://wiki.ros.org/rosinstall_generator',
     keywords=['ROS'],
     classifiers=['Programming Language :: Python',
