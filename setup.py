@@ -15,6 +15,12 @@ setup(
         'rosdistro >= 0.7.3',
         'rospkg',
     ],
+    extras_require={
+        'test': [
+            "mock; python_version < '3.3'",
+            'pytest',
+        ],
+    },
     packages=find_packages('src'),
     package_dir={'': 'src'},
     entry_points = {
