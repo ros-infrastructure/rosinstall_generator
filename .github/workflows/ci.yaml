@@ -27,7 +27,7 @@ jobs:
           python-version: ${{matrix.python}}
       - name: Install dependencies
         run: |
-          python -m pip install argparse catkin-pkg pytest pytest-cov rosdistro rospkg PyYAML setuptools coverage
+          python -m pip install catkin-pkg pytest pytest-cov rosdistro rospkg PyYAML setuptools coverage
       - name: Run tests
         run: |
           python -m pytest test --cov
