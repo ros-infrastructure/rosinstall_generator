@@ -1,0 +1,32 @@
+0.1.23 (2023-02-27)
+-------------------
+- Update release distributions.
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/79
+- Adopt the new GitLab archive download URL scheme
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/78
+- Add GitHub Actions workflow to run CI.
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/75
+- Support '.' in release repository names
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/77
+- Depend on `-modules` apt packages
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/73
+- List 'ROS Infrastructure Team' as the package maintainer
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/80
+- Run tests with pytest instead of nose
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/82
+- Drop exec perms from non-executables and remove setup.sh
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/83
+- Update minimum Python 3 version to 3.6
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/84
+- Drop 'setuptools' dependency in setup.py
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/87
+- Run CI against Python 3.10
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/85
+- Use a 'raw' string in a regex
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/88
+- Drop support for Python <= 2.6
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/86
+- Declare test dependencies in [test] extra
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/89
+- Avoid an assert when running into entries that have no release version
+  - https://github.com/ros-infrastructure/rosinstall_generator/pull/91
