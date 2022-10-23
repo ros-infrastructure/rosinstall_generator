@@ -101,7 +101,7 @@ def _get_packages_for_repos(distro_name, repo_names, source=False):
             package_names.update(source_package_xmls.keys())
         else:
             release_repo = wet_distro.repositories[repo_name].release_repository
-            if release_repo:
+            if release_repo and release_repo.version:
                 package_names.update(release_repo.package_names)
             else:
                 unreleased_repo_names.add(repo_name)
