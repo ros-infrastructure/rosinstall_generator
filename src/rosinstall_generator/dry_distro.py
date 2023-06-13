@@ -127,7 +127,7 @@ def _get_stack_info(distro, stack_name):
             data = load_url(url)
         except URLError as e:
             raise RuntimeError("Could not fetch information for stack '%s' with version '%s': %s" % (stack_name, version, e))
-        _stack_info[stack_name] = yaml.load(data)
+        _stack_info[stack_name] = yaml.safe_load(data)
     return _stack_info[stack_name]
 
 
