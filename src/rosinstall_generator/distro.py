@@ -71,7 +71,8 @@ class CustomLogger(object):
             self.logger.log(logging.DEBUG, line.rstrip())
 
 
-def get_recursive_dependencies(distro, package_names, excludes=None, limit_depth=None, source=False):
+def get_recursive_dependencies(distro, package_names, excludes=None, limit_depth=None, source=False,
+                               depend_type=['buildtool', 'buildtool_export', 'build', 'build_export', 'run', 'test']):
     excludes = set(excludes or [])
     dependencies = set([])
     if source and distro.source_packages:
@@ -85,8 +86,7 @@ def get_recursive_dependencies(distro, package_names, excludes=None, limit_depth
         for pkg_name in package_names:
             try:
                 dependencies |= walker.get_recursive_depends(
-                    pkg_name,
-                    ['buildtool', 'buildtool_export', 'build', 'build_export', 'run', 'test'],
+                    pkg_name, depend_type,
                     ros_packages_only=True,
                     ignore_pkgs=dependencies | excludes, limit_depth=limit_depth)
             except AssertionError as e:
@@ -97,7 +97,8 @@ def get_recursive_dependencies(distro, package_names, excludes=None, limit_depth
     return dependencies
 
 
-def get_recursive_dependencies_on(distro, package_names, excludes=None, limit=None, source=False):
+def get_recursive_dependencies_on(distro, package_names, excludes=None, limit=None, source=False,
+                                  depend_type=['buildtool', 'buildtool_export', 'build', 'build_export', 'run', 'test']):
     excludes = set(excludes or [])
     limit = set(limit or [])
     dependencies = set([])
@@ -117,8 +118,7 @@ def get_recursive_dependencies_on(distro, package_names, excludes=None, limit=No
     try:
         for pkg_name in package_names:
             dependencies |= walker.get_recursive_depends_on(
-                pkg_name,
-                ['buildtool', 'buildtool_export', 'build', 'build_export', 'run', 'test'],
+                pkg_name, depend_type,
                 ignore_pkgs=dependencies | excludes)
     finally:
         sys.stderr = stderr
