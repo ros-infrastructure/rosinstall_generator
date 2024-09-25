@@ -43,10 +43,10 @@ from catkin_pkg.packages import find_packages_allowing_duplicates
 from rospkg import RosPack, RosStack
 from rospkg.environment import ROS_PACKAGE_PATH
 
-from rosinstall_generator.distro import get_distro as _get_wet_distro
-from rosinstall_generator.distro import generate_rosinstall as generate_wet_rosinstall
-from rosinstall_generator.distro import get_recursive_dependencies as get_recursive_dependencies_of_wet
-from rosinstall_generator.distro import get_recursive_dependencies_on as get_recursive_dependencies_on_of_wet
+from rosinstall_generator.distro import get_distro
+from rosinstall_generator.distro import generate_rosinstall as distro_generate_rosinstall
+from rosinstall_generator.distro import get_recursive_dependencies
+from rosinstall_generator.distro import get_recursive_dependencies_on
 from rosinstall_generator.distro import get_package_names
 from rosinstall_generator.distro import _generate_rosinstall
 
@@ -183,7 +183,7 @@ _wet_distro = None
 def get_wet_distro(distro_name):
     global _wet_distro
     if _wet_distro is None:
-        _wet_distro = _get_wet_distro(distro_name)
+        _wet_distro = get_distro(distro_name)
     return _wet_distro
 
 
@@ -288,7 +288,7 @@ def generate_rosinstall(distro_name, names,
             wet_distro = get_wet_distro(distro_name)
             _, unreleased_package_names = get_package_names(wet_distro)
             excludes = exclude_names.wet_package_names | deps_up_to_names.wet_package_names | set(unreleased_package_names)
-            result.wet_package_names |= get_recursive_dependencies_of_wet(wet_distro, result.wet_package_names, excludes=excludes,
+            result.wet_package_names |= get_recursive_dependencies(wet_distro, result.wet_package_names, excludes=excludes,
                     limit_depth=deps_depth, source=upstream_source_version)
             logger.debug('Packages including dependencies: %s' % ', '.join(sorted(result.wet_package_names)))
 
@@ -298,7 +298,7 @@ def generate_rosinstall(distro_name, names,
         if deps_up_to_names.wet_package_names:
             wet_distro = get_wet_distro(distro_name)
             # wet depends on do not include the names since they are excluded to stop recursion asap
-            wet_package_names = get_recursive_dependencies_on_of_wet(wet_distro, deps_up_to_names.wet_package_names, excludes=names.wet_package_names,
+            wet_package_names = get_recursive_dependencies_on(wet_distro, deps_up_to_names.wet_package_names, excludes=names.wet_package_names,
                     limit=result.wet_package_names, source=upstream_source_version)
             # keep all names which are already in the result set
             wet_package_names |= result.wet_package_names & names.wet_package_names
@@ -365,7 +365,7 @@ def generate_rosinstall(distro_name, names,
             rosinstall_data += wet_rosinstall_data
         else:
             logger.debug('Generate rosinstall entries for wet packages: %s' % ', '.join(sorted(result.wet_package_names)))
-            wet_rosinstall_data = generate_wet_rosinstall(wet_distro, result.wet_package_names, flat=flat, tar=tar)
+            wet_rosinstall_data = distro_generate_rosinstall(wet_distro, result.wet_package_names, flat=flat, tar=tar)
             rosinstall_data += wet_rosinstall_data
     else:
         logger.warn('No packages or repos found')
