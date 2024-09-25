@@ -109,7 +109,7 @@ def _classify_names(distro_name, names, source=False):
     package_names = set([])
     variant_names = set([])
 
-    # identify wet packages
+    # identify packages
     if unknown_names:
         ros_distro = get_cached_distro(distro_name)
         packages = ros_distro.source_packages if source and ros_distro.source_packages else ros_distro.release_packages
@@ -203,7 +203,7 @@ def generate_rosinstall(distro_name, names,
     if from_paths:
         include_names_from_path = set([])
         [include_names_from_path.update(_get_package_names(from_path)) for from_path in from_paths]
-        logger.debug("The following wet packages found in '--from-path' will be considered: %s" % ', '.join(sorted(include_names_from_path)))
+        logger.debug("The following packages found in '--from-path' will be considered: %s" % ', '.join(sorted(include_names_from_path)))
         names.update(include_names_from_path)
 
     # Allow special keywords in repos
@@ -260,7 +260,7 @@ def generate_rosinstall(distro_name, names,
     if exclude_paths:
         exclude_names_from_path = set([])
         [exclude_names_from_path.update(_get_package_names(exclude_path)) for exclude_path in exclude_paths]
-        logger.debug("The following wet packages found in '--exclude-path' will be excluded: %s" % ', '.join(sorted(exclude_names_from_path)))
+        logger.debug("The following packages found in '--exclude-path' will be excluded: %s" % ', '.join(sorted(exclude_names_from_path)))
         exclude_names.update(exclude_names_from_path)
     exclude_names, unknown_names = _classify_names(distro_name, exclude_names, source=upstream_source_version)
     if unknown_names:
@@ -283,7 +283,7 @@ def generate_rosinstall(distro_name, names,
 
     # extend the names with recursive dependencies
     if deps or deps_up_to:
-        # add wet dependencies
+        # add dependencies
         if result.package_names:
             ros_distro = get_cached_distro(distro_name)
             _, unreleased_package_names = get_package_names(ros_distro)
@@ -294,10 +294,10 @@ def generate_rosinstall(distro_name, names,
 
     # intersect result with recursive dependencies on
     if deps_up_to:
-        # intersect with wet dependencies on
+        # intersect with dependencies on
         if deps_up_to_names.package_names:
             ros_distro = get_cached_distro(distro_name)
-            # wet depends on do not include the names since they are excluded to stop recursion asap
+            # depends on do not include the names since they are excluded to stop recursion asap
             package_names = get_recursive_dependencies_on(ros_distro, deps_up_to_names.package_names, excludes=names.package_names,
                     limit=result.package_names, source=upstream_source_version)
             # keep all names which are already in the result set
@@ -305,13 +305,13 @@ def generate_rosinstall(distro_name, names,
             result.package_names = package_names
         else:
             result.package_names.clear()
-        logger.debug('Wet packages after intersection: %s' % ', '.join(sorted(result.package_names)))
+        logger.debug('Packages after intersection: %s' % ', '.join(sorted(result.package_names)))
 
     # exclude passed in names
     if deps_only:
         result.package_names -= set(names.package_names)
 
-    # exclude wet packages based on build type
+    # exclude packages based on build type
     if catkin_only or non_catkin_only:
         ros_distro = get_cached_distro(distro_name)
         for pkg_name in list(result.package_names):
@@ -360,10 +360,10 @@ def generate_rosinstall(distro_name, names,
                 if repos_without_release:
                     logger.warn('The following repositories without a release will be ignored: %s' % ', '.join(sorted(repos_without_release)))
                     [repos.pop(repo_name) for repo_name in repos_without_release]
-            logger.debug('Generate rosinstall entries for wet repositories: %s' % ', '.join(sorted(repos.keys())))
+            logger.debug('Generate rosinstall entries for repositories: %s' % ', '.join(sorted(repos.keys())))
             rosinstall_data += generate_rosinstall_for_repos(repos, version_tag=upstream_version_tag, tar=tar)
         else:
-            logger.debug('Generate rosinstall entries for wet packages: %s' % ', '.join(sorted(result.package_names)))
+            logger.debug('Generate rosinstall entries for packages: %s' % ', '.join(sorted(result.package_names)))
             rosinstall_data += distro_generate_rosinstall(ros_distro, result.package_names, flat=flat, tar=tar)
     else:
         logger.warn('No packages or repos found')
