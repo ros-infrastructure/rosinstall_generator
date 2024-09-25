@@ -106,7 +106,7 @@ def _get_packages_for_repos(distro_name, repo_names, source=False):
 def _classify_names(distro_name, names, source=False):
     unknown_names = set(names or [])
 
-    wet_package_names = set([])
+    package_names = set([])
     variant_names = set([])
 
     # identify wet packages
@@ -115,10 +115,10 @@ def _classify_names(distro_name, names, source=False):
         packages = ros_distro.source_packages if source and ros_distro.source_packages else ros_distro.release_packages
         for name in unknown_names:
             if name in packages:
-                wet_package_names.add(name)
-        unknown_names -= wet_package_names
+                package_names.add(name)
+        unknown_names -= package_names
 
-    return Names(wet_package_names), unknown_names
+    return Names(package_names), unknown_names
 
 
 def generate_rosinstall_for_repos(repos, version_tag=True, tar=False):
@@ -139,11 +139,11 @@ class Names(object):
     Stores package names.
     '''
 
-    def __init__(self, wet_package_names):
-        self.wet_package_names = set(wet_package_names)
+    def __init__(self, package_names):
+        self.package_names = set(package_names)
 
     def update(self, other):
-        self.wet_package_names.update(other.wet_package_names)
+        self.package_names.update(other.package_names)
 
 
 def _expand_keywords(distro_name, keywords):
@@ -219,8 +219,8 @@ def generate_rosinstall(distro_name, names,
     repo_names, unknown_repo_names = _classify_repo_names(distro_name, repo_names)
     if unknown_repo_names:
         logger.warn('The following unknown repositories will be ignored: %s' % (', '.join(sorted(unknown_repo_names))))
-    wet_package_names, unreleased_repo_names = _get_packages_for_repos(distro_name, repo_names, source=upstream_source_version)
-    names.update(wet_package_names)
+    package_names, unreleased_repo_names = _get_packages_for_repos(distro_name, repo_names, source=upstream_source_version)
+    names.update(package_names)
     if unreleased_repo_names and not upstream_version_tag and not upstream_source_version:
         logger.warn('The following unreleased repositories will be ignored: %s' % ', '.join(sorted(unreleased_repo_names)))
     if unreleased_repo_names and (deps or deps_up_to) and (upstream_version_tag or upstream_source_version):
@@ -235,10 +235,10 @@ def generate_rosinstall(distro_name, names,
         if unknown_names:
             logger.warn('The following unreleased packages/stacks from the %s will be ignored: %s' % (ROS_PACKAGE_PATH, ', '.join(sorted(unknown_names))))
         names.update(expanded_names)
-    if not names.wet_package_names and not has_repos:
+    if not names.package_names and not has_repos:
         raise RuntimeError('No packages/stacks left after ignoring unreleased')
-    if names.wet_package_names:
-        logger.debug('Packages/stacks: %s' % ', '.join(sorted(names.wet_package_names)))
+    if names.package_names:
+        logger.debug('Packages/stacks: %s' % ', '.join(sorted(names.package_names)))
     if unreleased_repo_names:
         logger.debug('Unreleased repositories: %s' % ', '.join(sorted(unreleased_repo_names)))
 
@@ -253,7 +253,7 @@ def generate_rosinstall(distro_name, names,
             logger.warn("The following unreleased '--deps-up-to' packages/stacks from the %s will be ignored: %s" % (ROS_PACKAGE_PATH, ', '.join(sorted(unknown_names))))
         deps_up_to_names.update(expanded_names)
     if deps_up_to:
-        logger.debug('Dependencies up to: %s' % ', '.join(sorted(deps_up_to_names.wet_package_names)))
+        logger.debug('Dependencies up to: %s' % ', '.join(sorted(deps_up_to_names.package_names)))
 
     # classify excludes
     exclude_names, excludes_keywords = _split_special_keywords(excludes or [])
@@ -269,71 +269,71 @@ def generate_rosinstall(distro_name, names,
         expanded_names, unknown_names = _classify_names(distro_name, _expand_keywords(distro_name, excludes_keywords), source=upstream_source_version)
         exclude_names.update(expanded_names)
     if excludes:
-        logger.debug('Excluded packages/stacks: %s' % ', '.join(sorted(exclude_names.wet_package_names)))
+        logger.debug('Excluded packages/stacks: %s' % ', '.join(sorted(exclude_names.package_names)))
 
     result = copy.deepcopy(names)
 
     # remove excluded names from the list of names
-    result.wet_package_names -= exclude_names.wet_package_names
-    if not result.wet_package_names and not has_repos:
+    result.package_names -= exclude_names.package_names
+    if not result.package_names and not has_repos:
         raise RuntimeError('No packages left after applying the exclusions')
 
-    if result.wet_package_names:
-        logger.debug('Packages: %s' % ', '.join(sorted(result.wet_package_names)))
+    if result.package_names:
+        logger.debug('Packages: %s' % ', '.join(sorted(result.package_names)))
 
     # extend the names with recursive dependencies
     if deps or deps_up_to:
         # add wet dependencies
-        if result.wet_package_names:
+        if result.package_names:
             ros_distro = get_cached_distro(distro_name)
             _, unreleased_package_names = get_package_names(ros_distro)
-            excludes = exclude_names.wet_package_names | deps_up_to_names.wet_package_names | set(unreleased_package_names)
-            result.wet_package_names |= get_recursive_dependencies(ros_distro, result.wet_package_names, excludes=excludes,
+            excludes = exclude_names.package_names | deps_up_to_names.package_names | set(unreleased_package_names)
+            result.package_names |= get_recursive_dependencies(ros_distro, result.package_names, excludes=excludes,
                     limit_depth=deps_depth, source=upstream_source_version)
-            logger.debug('Packages including dependencies: %s' % ', '.join(sorted(result.wet_package_names)))
+            logger.debug('Packages including dependencies: %s' % ', '.join(sorted(result.package_names)))
 
     # intersect result with recursive dependencies on
     if deps_up_to:
         # intersect with wet dependencies on
-        if deps_up_to_names.wet_package_names:
+        if deps_up_to_names.package_names:
             ros_distro = get_cached_distro(distro_name)
             # wet depends on do not include the names since they are excluded to stop recursion asap
-            wet_package_names = get_recursive_dependencies_on(ros_distro, deps_up_to_names.wet_package_names, excludes=names.wet_package_names,
-                    limit=result.wet_package_names, source=upstream_source_version)
+            package_names = get_recursive_dependencies_on(ros_distro, deps_up_to_names.package_names, excludes=names.package_names,
+                    limit=result.package_names, source=upstream_source_version)
             # keep all names which are already in the result set
-            wet_package_names |= result.wet_package_names & names.wet_package_names
-            result.wet_package_names = wet_package_names
+            package_names |= result.package_names & names.package_names
+            result.package_names = package_names
         else:
-            result.wet_package_names.clear()
-        logger.debug('Wet packages after intersection: %s' % ', '.join(sorted(result.wet_package_names)))
+            result.package_names.clear()
+        logger.debug('Wet packages after intersection: %s' % ', '.join(sorted(result.package_names)))
 
     # exclude passed in names
     if deps_only:
-        result.wet_package_names -= set(names.wet_package_names)
+        result.package_names -= set(names.package_names)
 
     # exclude wet packages based on build type
     if catkin_only or non_catkin_only:
         ros_distro = get_cached_distro(distro_name)
-        for pkg_name in list(result.wet_package_names):
+        for pkg_name in list(result.package_names):
             pkg_xml = ros_distro.get_release_package_xml(pkg_name)
             try:
                 pkg = parse_package_string(pkg_xml)
             except InvalidPackage as e:
                 logger.warn("The package '%s' has an invalid manifest and will be ignored: %s" % (pkg_name, e))
-                result.wet_package_names.remove(pkg_name)
+                result.package_names.remove(pkg_name)
                 continue
             build_type = ([e.content for e in pkg.exports if e.tagname == 'build_type'][0]) if 'build_type' in [e.tagname for e in pkg.exports] else 'catkin'
             if catkin_only ^ (build_type == 'catkin'):
-                result.wet_package_names.remove(pkg_name)
+                result.package_names.remove(pkg_name)
 
     # get rosinstall data
     rosinstall_data = []
-    if result.wet_package_names or has_repos:
+    if result.package_names or has_repos:
         ros_distro = get_cached_distro(distro_name)
         if upstream_version_tag or upstream_source_version:
             # determine repositories based on package names and passed in repository names
             repos = {}
-            for pkg_name in result.wet_package_names:
+            for pkg_name in result.package_names:
                 if upstream_source_version and ros_distro.source_packages:
                     pkg = ros_distro.source_packages[pkg_name]
                     repos[pkg.repository_name] = ros_distro.repositories[pkg.repository_name]
@@ -364,8 +364,8 @@ def generate_rosinstall(distro_name, names,
             wet_rosinstall_data = generate_rosinstall_for_repos(repos, version_tag=upstream_version_tag, tar=tar)
             rosinstall_data += wet_rosinstall_data
         else:
-            logger.debug('Generate rosinstall entries for wet packages: %s' % ', '.join(sorted(result.wet_package_names)))
-            wet_rosinstall_data = distro_generate_rosinstall(ros_distro, result.wet_package_names, flat=flat, tar=tar)
+            logger.debug('Generate rosinstall entries for wet packages: %s' % ', '.join(sorted(result.package_names)))
+            wet_rosinstall_data = distro_generate_rosinstall(ros_distro, result.package_names, flat=flat, tar=tar)
             rosinstall_data += wet_rosinstall_data
     else:
         logger.warn('No packages or repos found')
