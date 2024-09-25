@@ -361,12 +361,10 @@ def generate_rosinstall(distro_name, names,
                     logger.warn('The following repositories without a release will be ignored: %s' % ', '.join(sorted(repos_without_release)))
                     [repos.pop(repo_name) for repo_name in repos_without_release]
             logger.debug('Generate rosinstall entries for wet repositories: %s' % ', '.join(sorted(repos.keys())))
-            wet_rosinstall_data = generate_rosinstall_for_repos(repos, version_tag=upstream_version_tag, tar=tar)
-            rosinstall_data += wet_rosinstall_data
+            rosinstall_data += generate_rosinstall_for_repos(repos, version_tag=upstream_version_tag, tar=tar)
         else:
             logger.debug('Generate rosinstall entries for wet packages: %s' % ', '.join(sorted(result.package_names)))
-            wet_rosinstall_data = distro_generate_rosinstall(ros_distro, result.package_names, flat=flat, tar=tar)
-            rosinstall_data += wet_rosinstall_data
+            rosinstall_data += distro_generate_rosinstall(ros_distro, result.package_names, flat=flat, tar=tar)
     else:
         logger.warn('No packages or repos found')
     return rosinstall_data
