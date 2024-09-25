@@ -85,17 +85,17 @@ def _classify_repo_names(distro_name, repo_names):
 def _get_packages_for_repos(distro_name, repo_names, source=False):
     package_names = set([])
     unreleased_repo_names = set([])
-    wet_distro = get_cached_distro(distro_name)
+    ros_distro = get_cached_distro(distro_name)
     for repo_name in repo_names:
         if source:
-            if not wet_distro.repositories[repo_name].source_repository:
+            if not ros_distro.repositories[repo_name].source_repository:
                 continue
             # Returns a mapping of package names to package XML strings in particular repo.
-            source_package_xmls = wet_distro.get_source_repo_package_xmls(repo_name)
+            source_package_xmls = ros_distro.get_source_repo_package_xmls(repo_name)
         if source and source_package_xmls:
             package_names.update(source_package_xmls.keys())
         else:
-            release_repo = wet_distro.repositories[repo_name].release_repository
+            release_repo = ros_distro.repositories[repo_name].release_repository
             if release_repo and release_repo.version:
                 package_names.update(release_repo.package_names)
             else:
@@ -111,8 +111,8 @@ def _classify_names(distro_name, names, source=False):
 
     # identify wet packages
     if unknown_names:
-        wet_distro = get_cached_distro(distro_name)
-        packages = wet_distro.source_packages if source and wet_distro.source_packages else wet_distro.release_packages
+        ros_distro = get_cached_distro(distro_name)
+        packages = ros_distro.source_packages if source and ros_distro.source_packages else ros_distro.release_packages
         for name in unknown_names:
             if name in packages:
                 wet_package_names.add(name)
@@ -149,8 +149,8 @@ class Names(object):
 def _expand_keywords(distro_name, keywords):
     names = set([])
     if ARG_ALL_PACKAGES in keywords:
-        wet_distro = get_cached_distro(distro_name)
-        released_package_names, _ = get_package_names(wet_distro)
+        ros_distro = get_cached_distro(distro_name)
+        released_package_names, _ = get_package_names(ros_distro)
         names.update(released_package_names)
     if ARG_CURRENT_ENVIRONMENT in keywords:
         names.update(_get_packages_in_environment())
@@ -212,8 +212,8 @@ def generate_rosinstall(distro_name, names,
         raise RuntimeError('The only keyword supported by repos is %r' % (ARG_ALL_PACKAGES))
 
     if ARG_ALL_PACKAGES in repo_keywords:
-        wet_distro = get_cached_distro(distro_name)
-        repo_names = wet_distro.repositories.keys()
+        ros_distro = get_cached_distro(distro_name)
+        repo_names = ros_distro.repositories.keys()
 
     # expand repository names into package names
     repo_names, unknown_repo_names = _classify_repo_names(distro_name, repo_names)
@@ -285,10 +285,10 @@ def generate_rosinstall(distro_name, names,
     if deps or deps_up_to:
         # add wet dependencies
         if result.wet_package_names:
-            wet_distro = get_cached_distro(distro_name)
-            _, unreleased_package_names = get_package_names(wet_distro)
+            ros_distro = get_cached_distro(distro_name)
+            _, unreleased_package_names = get_package_names(ros_distro)
             excludes = exclude_names.wet_package_names | deps_up_to_names.wet_package_names | set(unreleased_package_names)
-            result.wet_package_names |= get_recursive_dependencies(wet_distro, result.wet_package_names, excludes=excludes,
+            result.wet_package_names |= get_recursive_dependencies(ros_distro, result.wet_package_names, excludes=excludes,
                     limit_depth=deps_depth, source=upstream_source_version)
             logger.debug('Packages including dependencies: %s' % ', '.join(sorted(result.wet_package_names)))
 
@@ -296,9 +296,9 @@ def generate_rosinstall(distro_name, names,
     if deps_up_to:
         # intersect with wet dependencies on
         if deps_up_to_names.wet_package_names:
-            wet_distro = get_cached_distro(distro_name)
+            ros_distro = get_cached_distro(distro_name)
             # wet depends on do not include the names since they are excluded to stop recursion asap
-            wet_package_names = get_recursive_dependencies_on(wet_distro, deps_up_to_names.wet_package_names, excludes=names.wet_package_names,
+            wet_package_names = get_recursive_dependencies_on(ros_distro, deps_up_to_names.wet_package_names, excludes=names.wet_package_names,
                     limit=result.wet_package_names, source=upstream_source_version)
             # keep all names which are already in the result set
             wet_package_names |= result.wet_package_names & names.wet_package_names
@@ -313,9 +313,9 @@ def generate_rosinstall(distro_name, names,
 
     # exclude wet packages based on build type
     if catkin_only or non_catkin_only:
-        wet_distro = get_cached_distro(distro_name)
+        ros_distro = get_cached_distro(distro_name)
         for pkg_name in list(result.wet_package_names):
-            pkg_xml = wet_distro.get_release_package_xml(pkg_name)
+            pkg_xml = ros_distro.get_release_package_xml(pkg_name)
             try:
                 pkg = parse_package_string(pkg_xml)
             except InvalidPackage as e:
@@ -329,18 +329,18 @@ def generate_rosinstall(distro_name, names,
     # get rosinstall data
     rosinstall_data = []
     if result.wet_package_names or has_repos:
-        wet_distro = get_cached_distro(distro_name)
+        ros_distro = get_cached_distro(distro_name)
         if upstream_version_tag or upstream_source_version:
             # determine repositories based on package names and passed in repository names
             repos = {}
             for pkg_name in result.wet_package_names:
-                if upstream_source_version and wet_distro.source_packages:
-                    pkg = wet_distro.source_packages[pkg_name]
-                    repos[pkg.repository_name] = wet_distro.repositories[pkg.repository_name]
+                if upstream_source_version and ros_distro.source_packages:
+                    pkg = ros_distro.source_packages[pkg_name]
+                    repos[pkg.repository_name] = ros_distro.repositories[pkg.repository_name]
                 else:
-                    pkg = wet_distro.release_packages[pkg_name]
+                    pkg = ros_distro.release_packages[pkg_name]
                     if pkg.repository_name not in repos:
-                        repo = wet_distro.repositories[pkg.repository_name]
+                        repo = ros_distro.repositories[pkg.repository_name]
                         release_repo = repo.release_repository
                         assert not upstream_version_tag or release_repo.version is not None, "Package '%s' in repository '%s' does not have a release version" % (pkg_name, pkg.repository_name)
                         repos[pkg.repository_name] = repo
@@ -349,7 +349,7 @@ def generate_rosinstall(distro_name, names,
                 repo_names = repo_names.union(unreleased_repo_names)
             for repo_name in repo_names:
                 if repo_name not in repos:
-                    repos[repo_name] = wet_distro.repositories[repo_name]
+                    repos[repo_name] = ros_distro.repositories[repo_name]
             # ignore repos which lack information
             repos_without_source = [repo_name for repo_name, repo in repos.items() if not repo.source_repository]
             if repos_without_source:
@@ -365,7 +365,7 @@ def generate_rosinstall(distro_name, names,
             rosinstall_data += wet_rosinstall_data
         else:
             logger.debug('Generate rosinstall entries for wet packages: %s' % ', '.join(sorted(result.wet_package_names)))
-            wet_rosinstall_data = distro_generate_rosinstall(wet_distro, result.wet_package_names, flat=flat, tar=tar)
+            wet_rosinstall_data = distro_generate_rosinstall(ros_distro, result.wet_package_names, flat=flat, tar=tar)
             rosinstall_data += wet_rosinstall_data
     else:
         logger.warn('No packages or repos found')
