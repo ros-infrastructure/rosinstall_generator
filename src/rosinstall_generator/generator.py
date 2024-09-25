@@ -73,9 +73,9 @@ def _classify_repo_names(distro_name, repo_names):
     names = set([])
     unknown_names = set([])
     if repo_names:
-        wet_distro = get_wet_distro(distro_name)
+        distro = get_cached_distro(distro_name)
         for repo_name in repo_names:
-            if repo_name in wet_distro.repositories:
+            if repo_name in distro.repositories:
                 names.add(repo_name)
             else:
                 unknown_names.add(repo_name)
@@ -85,7 +85,7 @@ def _classify_repo_names(distro_name, repo_names):
 def _get_packages_for_repos(distro_name, repo_names, source=False):
     package_names = set([])
     unreleased_repo_names = set([])
-    wet_distro = get_wet_distro(distro_name)
+    wet_distro = get_cached_distro(distro_name)
     for repo_name in repo_names:
         if source:
             if not wet_distro.repositories[repo_name].source_repository:
@@ -111,7 +111,7 @@ def _classify_names(distro_name, names, source=False):
 
     # identify wet packages
     if unknown_names:
-        wet_distro = get_wet_distro(distro_name)
+        wet_distro = get_cached_distro(distro_name)
         packages = wet_distro.source_packages if source and wet_distro.source_packages else wet_distro.release_packages
         for name in unknown_names:
             if name in packages:
@@ -149,7 +149,7 @@ class Names(object):
 def _expand_keywords(distro_name, keywords):
     names = set([])
     if ARG_ALL_PACKAGES in keywords:
-        wet_distro = get_wet_distro(distro_name)
+        wet_distro = get_cached_distro(distro_name)
         released_package_names, _ = get_package_names(wet_distro)
         names.update(released_package_names)
     if ARG_CURRENT_ENVIRONMENT in keywords:
@@ -177,14 +177,14 @@ def _get_package_names(path):
     return set([pkg.name for _, pkg in find_packages_allowing_duplicates(path).items()])
 
 
-_wet_distro = None
+_cached_distro = None
 
 
-def get_wet_distro(distro_name):
-    global _wet_distro
-    if _wet_distro is None:
-        _wet_distro = get_distro(distro_name)
-    return _wet_distro
+def get_cached_distro(distro_name):
+    global _cached_distro
+    if _cached_distro is None:
+        _cached_distro = get_distro(distro_name)
+    return _cached_distro
 
 
 def generate_rosinstall(distro_name, names,
@@ -212,7 +212,7 @@ def generate_rosinstall(distro_name, names,
         raise RuntimeError('The only keyword supported by repos is %r' % (ARG_ALL_PACKAGES))
 
     if ARG_ALL_PACKAGES in repo_keywords:
-        wet_distro = get_wet_distro(distro_name)
+        wet_distro = get_cached_distro(distro_name)
         repo_names = wet_distro.repositories.keys()
 
     # expand repository names into package names
@@ -285,7 +285,7 @@ def generate_rosinstall(distro_name, names,
     if deps or deps_up_to:
         # add wet dependencies
         if result.wet_package_names:
-            wet_distro = get_wet_distro(distro_name)
+            wet_distro = get_cached_distro(distro_name)
             _, unreleased_package_names = get_package_names(wet_distro)
             excludes = exclude_names.wet_package_names | deps_up_to_names.wet_package_names | set(unreleased_package_names)
             result.wet_package_names |= get_recursive_dependencies(wet_distro, result.wet_package_names, excludes=excludes,
@@ -296,7 +296,7 @@ def generate_rosinstall(distro_name, names,
     if deps_up_to:
         # intersect with wet dependencies on
         if deps_up_to_names.wet_package_names:
-            wet_distro = get_wet_distro(distro_name)
+            wet_distro = get_cached_distro(distro_name)
             # wet depends on do not include the names since they are excluded to stop recursion asap
             wet_package_names = get_recursive_dependencies_on(wet_distro, deps_up_to_names.wet_package_names, excludes=names.wet_package_names,
                     limit=result.wet_package_names, source=upstream_source_version)
@@ -313,7 +313,7 @@ def generate_rosinstall(distro_name, names,
 
     # exclude wet packages based on build type
     if catkin_only or non_catkin_only:
-        wet_distro = get_wet_distro(distro_name)
+        wet_distro = get_cached_distro(distro_name)
         for pkg_name in list(result.wet_package_names):
             pkg_xml = wet_distro.get_release_package_xml(pkg_name)
             try:
@@ -329,7 +329,7 @@ def generate_rosinstall(distro_name, names,
     # get rosinstall data
     rosinstall_data = []
     if result.wet_package_names or has_repos:
-        wet_distro = get_wet_distro(distro_name)
+        wet_distro = get_cached_distro(distro_name)
         if upstream_version_tag or upstream_source_version:
             # determine repositories based on package names and passed in repository names
             repos = {}
