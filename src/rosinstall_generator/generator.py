@@ -50,11 +50,6 @@ from rosinstall_generator.distro import get_recursive_dependencies_on as get_rec
 from rosinstall_generator.distro import get_package_names
 from rosinstall_generator.distro import _generate_rosinstall
 
-from rosinstall_generator.dry_distro import get_distro as _get_dry_distro
-from rosinstall_generator.dry_distro import generate_rosinstall as generate_dry_rosinstall
-from rosinstall_generator.dry_distro import get_recursive_dependencies as get_recursive_dependencies_of_dry
-from rosinstall_generator.dry_distro import get_recursive_dependencies_on as get_recursive_dependencies_on_of_dry
-from rosinstall_generator.dry_distro import get_stack_names
 
 logger = logging.getLogger('rosinstall_generator')
 
@@ -112,7 +107,6 @@ def _classify_names(distro_name, names, source=False):
     unknown_names = set(names or [])
 
     wet_package_names = set([])
-    dry_stack_names = set([])
     variant_names = set([])
 
     # identify wet packages
@@ -124,32 +118,7 @@ def _classify_names(distro_name, names, source=False):
                 wet_package_names.add(name)
         unknown_names -= wet_package_names
 
-    if distro_name == 'groovy':
-        # identify dry stacks/variants
-        if unknown_names:
-            dry_distro = get_dry_distro(distro_name)
-            for name in unknown_names:
-                if name in dry_distro.get_stacks(released=True):
-                    dry_stack_names.add(name)
-                if name in dry_distro.variants:
-                    variant_names.add(name)
-            unknown_names -= dry_stack_names
-            unknown_names -= variant_names
-
-        # resolve variant names into wet package names or dry stack names
-        if variant_names:
-            wet_distro = get_wet_distro(distro_name)
-            for variant_name in variant_names:
-                variant_depends = dry_distro.variants[variant_name].get_stack_names()
-                for depend in variant_depends:
-                    if depend in wet_distro.release_packages:
-                        wet_package_names.add(depend)
-                    elif depend in dry_distro.stacks:
-                        dry_stack_names.add(depend)
-                    else:
-                        raise RuntimeError("The following dependency of variant '%s' could not be found: %s" % (variant_name, depend))
-
-    return Names(wet_package_names, dry_stack_names), unknown_names
+    return Names(wet_package_names), unknown_names
 
 
 def generate_rosinstall_for_repos(repos, version_tag=True, tar=False):
@@ -167,16 +136,14 @@ def generate_rosinstall_for_repos(repos, version_tag=True, tar=False):
 
 class Names(object):
     '''
-    Stores wet package names and dry stack names.
+    Stores package names.
     '''
 
-    def __init__(self, wet_package_names, dry_stack_names):
+    def __init__(self, wet_package_names):
         self.wet_package_names = set(wet_package_names)
-        self.dry_stack_names = set(dry_stack_names)
 
     def update(self, other):
         self.wet_package_names.update(other.wet_package_names)
-        self.dry_stack_names.update(other.dry_stack_names)
 
 
 def _expand_keywords(distro_name, keywords):
@@ -185,10 +152,6 @@ def _expand_keywords(distro_name, keywords):
         wet_distro = get_wet_distro(distro_name)
         released_package_names, _ = get_package_names(wet_distro)
         names.update(released_package_names)
-        if distro_name == 'groovy':
-            dry_distro = get_dry_distro(distro_name)
-            released_stack_names, _ = get_stack_names(dry_distro)
-            names.update(released_stack_names)
     if ARG_CURRENT_ENVIRONMENT in keywords:
         names.update(_get_packages_in_environment())
     return names
@@ -215,7 +178,6 @@ def _get_package_names(path):
 
 
 _wet_distro = None
-_dry_distro = None
 
 
 def get_wet_distro(distro_name):
@@ -223,13 +185,6 @@ def get_wet_distro(distro_name):
     if _wet_distro is None:
         _wet_distro = _get_wet_distro(distro_name)
     return _wet_distro
-
-
-def get_dry_distro(distro_name):
-    global _dry_distro
-    if _dry_distro is None and distro_name == 'groovy':
-        _dry_distro = _get_dry_distro(distro_name)
-    return _dry_distro
 
 
 def generate_rosinstall(distro_name, names,
@@ -280,10 +235,10 @@ def generate_rosinstall(distro_name, names,
         if unknown_names:
             logger.warn('The following unreleased packages/stacks from the %s will be ignored: %s' % (ROS_PACKAGE_PATH, ', '.join(sorted(unknown_names))))
         names.update(expanded_names)
-    if not names.wet_package_names and not names.dry_stack_names and not has_repos:
+    if not names.wet_package_names and not has_repos:
         raise RuntimeError('No packages/stacks left after ignoring unreleased')
-    if names.wet_package_names or names.dry_stack_names:
-        logger.debug('Packages/stacks: %s' % ', '.join(sorted(names.wet_package_names | names.dry_stack_names)))
+    if names.wet_package_names:
+        logger.debug('Packages/stacks: %s' % ', '.join(sorted(names.wet_package_names)))
     if unreleased_repo_names:
         logger.debug('Unreleased repositories: %s' % ', '.join(sorted(unreleased_repo_names)))
 
@@ -298,7 +253,7 @@ def generate_rosinstall(distro_name, names,
             logger.warn("The following unreleased '--deps-up-to' packages/stacks from the %s will be ignored: %s" % (ROS_PACKAGE_PATH, ', '.join(sorted(unknown_names))))
         deps_up_to_names.update(expanded_names)
     if deps_up_to:
-        logger.debug('Dependencies up to: %s' % ', '.join(sorted(deps_up_to_names.wet_package_names | deps_up_to_names.dry_stack_names)))
+        logger.debug('Dependencies up to: %s' % ', '.join(sorted(deps_up_to_names.wet_package_names)))
 
     # classify excludes
     exclude_names, excludes_keywords = _split_special_keywords(excludes or [])
@@ -314,47 +269,20 @@ def generate_rosinstall(distro_name, names,
         expanded_names, unknown_names = _classify_names(distro_name, _expand_keywords(distro_name, excludes_keywords), source=upstream_source_version)
         exclude_names.update(expanded_names)
     if excludes:
-        logger.debug('Excluded packages/stacks: %s' % ', '.join(sorted(exclude_names.wet_package_names | exclude_names.dry_stack_names)))
+        logger.debug('Excluded packages/stacks: %s' % ', '.join(sorted(exclude_names.wet_package_names)))
 
     result = copy.deepcopy(names)
-    # clear wet packages if not requested
-    if dry_only:
-        result.wet_package_names.clear()
-    # clear dry packages if not requested and no dependencies
-    if wet_only and not deps and not deps_up_to:
-        result.dry_stack_names.clear()
 
-    # remove excluded names from the list of wet and dry names
+    # remove excluded names from the list of names
     result.wet_package_names -= exclude_names.wet_package_names
-    result.dry_stack_names -= exclude_names.dry_stack_names
-    if not result.wet_package_names and not result.dry_stack_names and not has_repos:
-        raise RuntimeError('No packages/stacks left after applying the exclusions')
+    if not result.wet_package_names and not has_repos:
+        raise RuntimeError('No packages left after applying the exclusions')
 
     if result.wet_package_names:
-        logger.debug('Wet packages: %s' % ', '.join(sorted(result.wet_package_names)))
-    if result.dry_stack_names:
-        logger.debug('Dry stacks: %s' % ', '.join(sorted(result.dry_stack_names)))
+        logger.debug('Packages: %s' % ', '.join(sorted(result.wet_package_names)))
 
     # extend the names with recursive dependencies
     if deps or deps_up_to:
-        # add dry dependencies
-        if result.dry_stack_names:
-            dry_distro = get_dry_distro(distro_name)
-            _, unreleased_stack_names = get_stack_names(dry_distro)
-            excludes = exclude_names.dry_stack_names | deps_up_to_names.dry_stack_names | set(unreleased_stack_names)
-            dry_dependencies, wet_dependencies = get_recursive_dependencies_of_dry(dry_distro, result.dry_stack_names, excludes=excludes)
-            logger.debug('Dry stacks including dependencies: %s' % ', '.join(sorted(dry_dependencies)))
-            result.dry_stack_names |= dry_dependencies
-
-            if not dry_only:
-                # add wet dependencies of dry stuff
-                logger.debug('Wet dependencies of dry stacks: %s' % ', '.join(sorted(wet_dependencies)))
-                for depend in wet_dependencies:
-                    if depend in exclude_names.wet_package_names or depend in deps_up_to_names.wet_package_names:
-                        continue
-                    wet_distro = get_wet_distro(distro_name)
-                    assert depend in wet_distro.release_packages, "Package '%s' does not have a version" % depend
-                    result.wet_package_names.add(depend)
         # add wet dependencies
         if result.wet_package_names:
             wet_distro = get_wet_distro(distro_name)
@@ -362,7 +290,7 @@ def generate_rosinstall(distro_name, names,
             excludes = exclude_names.wet_package_names | deps_up_to_names.wet_package_names | set(unreleased_package_names)
             result.wet_package_names |= get_recursive_dependencies_of_wet(wet_distro, result.wet_package_names, excludes=excludes,
                     limit_depth=deps_depth, source=upstream_source_version)
-            logger.debug('Wet packages including dependencies: %s' % ', '.join(sorted(result.wet_package_names)))
+            logger.debug('Packages including dependencies: %s' % ', '.join(sorted(result.wet_package_names)))
 
     # intersect result with recursive dependencies on
     if deps_up_to:
@@ -379,23 +307,9 @@ def generate_rosinstall(distro_name, names,
             result.wet_package_names.clear()
         logger.debug('Wet packages after intersection: %s' % ', '.join(sorted(result.wet_package_names)))
 
-        # intersect with dry dependencies on
-        dry_dependency_names = result.wet_package_names | deps_up_to_names.dry_stack_names
-        if dry_dependency_names and not wet_only:
-            dry_distro = get_dry_distro(distro_name)
-            # dry depends on do not include the names since they are excluded to stop recursion asap
-            dry_stack_names = get_recursive_dependencies_on_of_dry(dry_distro, dry_dependency_names, excludes=names.dry_stack_names, limit=result.dry_stack_names)
-            # keep all names which are already in the result set
-            dry_stack_names |= result.dry_stack_names & names.dry_stack_names
-            result.dry_stack_names = dry_stack_names
-        else:
-            result.dry_stack_names.clear()
-        logger.debug('Dry stacks after intersection: %s' % ', '.join(sorted(result.dry_stack_names)))
-
     # exclude passed in names
     if deps_only:
         result.wet_package_names -= set(names.wet_package_names)
-        result.dry_stack_names -= set(names.dry_stack_names)
 
     # exclude wet packages based on build type
     if catkin_only or non_catkin_only:
@@ -412,9 +326,9 @@ def generate_rosinstall(distro_name, names,
             if catkin_only ^ (build_type == 'catkin'):
                 result.wet_package_names.remove(pkg_name)
 
-    # get wet and/or dry rosinstall data
+    # get rosinstall data
     rosinstall_data = []
-    if not dry_only and (result.wet_package_names or has_repos):
+    if result.wet_package_names or has_repos:
         wet_distro = get_wet_distro(distro_name)
         if upstream_version_tag or upstream_source_version:
             # determine repositories based on package names and passed in repository names
@@ -453,11 +367,8 @@ def generate_rosinstall(distro_name, names,
             logger.debug('Generate rosinstall entries for wet packages: %s' % ', '.join(sorted(result.wet_package_names)))
             wet_rosinstall_data = generate_wet_rosinstall(wet_distro, result.wet_package_names, flat=flat, tar=tar)
             rosinstall_data += wet_rosinstall_data
-    if not wet_only and result.dry_stack_names:
-        logger.debug('Generate rosinstall entries for dry stacks: %s' % ', '.join(sorted(result.dry_stack_names)))
-        dry_distro = get_dry_distro(distro_name)
-        dry_rosinstall_data = generate_dry_rosinstall(dry_distro, result.dry_stack_names)
-        rosinstall_data += dry_rosinstall_data
+    else:
+        logger.warn('No packages or repos found')
     return rosinstall_data
 
 
