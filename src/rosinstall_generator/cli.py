@@ -83,6 +83,10 @@ def main(argv=sys.argv[1:]):
     parser.add_argument('--deps-only', action='store_true', default=False,
         help='Include only the recursive dependencies but not the specified packages')
 
+    # list of packages to be consideredn
+    parser.add_argument('--depend-type', nargs='*', default=['buildtool', 'buildtool_export', 'build', 'build_export', 'run', 'test'],
+                        help='Specify the depends type to be included in generator, Default is "buildtool buildtool_export build build_export run test"')
+
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--wet-only', action='store_true', default=False,
         help='Only include catkin packages')
@@ -156,6 +160,7 @@ def main(argv=sys.argv[1:]):
             from_paths=args.from_path,
             repo_names=args.repos,
             deps=args.deps, deps_up_to=args.deps_up_to, deps_depth=args.deps_depth, deps_only=args.deps_only,
+            depend_type=args.depend_type,
             wet_only=args.wet_only, dry_only=args.dry_only, catkin_only=args.catkin_only, non_catkin_only=args.non_catkin_only,
             excludes=args.exclude, exclude_paths=args.exclude_path,
             flat=args.flat,
