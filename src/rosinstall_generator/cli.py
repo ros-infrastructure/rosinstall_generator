@@ -31,8 +31,6 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from __future__ import print_function
-
 import argparse
 import logging
 import os
@@ -85,13 +83,13 @@ def main(argv=sys.argv[1:]):
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--wet-only', action='store_true', default=False,
-        help='Only include catkin packages')
+        help='Deprecated unused')
     group.add_argument('--dry-only', action='store_true', default=False,
-        help='Only include rosbuild stacks')
+        help='Deprecated unused')
     group.add_argument('--catkin-only', action='store_true', default=False,
-        help="Only wet packages with build type 'catkin'")
+        help="Deprecated unused")
     group.add_argument('--non-catkin-only', action='store_true', default=False,
-        help="Only wet packages with build type other than 'catkin'")
+        help="Deprecated unused")
 
     parser.add_argument('--exclude', nargs='*',
         help="Exclude a set of packages (also skips further recursive dependencies). Use '%s' to specify all packages available in the current environment." % ARG_CURRENT_ENVIRONMENT)
@@ -109,13 +107,6 @@ def main(argv=sys.argv[1:]):
 
     args = parser.parse_args(argv)
 
-    # check for invalid combinations
-    if args.rosdistro == 'groovy' and args.deps_depth:
-        parser.error("Option '--deps-depth N' is not available for the ROS distro 'groovy'")
-    if args.rosdistro != 'groovy':
-        if args.dry_only:
-            parser.error("For the ROS distro '%s' there are no rosbuild released packages so '--dry-only' is not a valid option" % args.rosdistro)
-        args.wet_only = True
 
     if not args.package_names and not args.from_path and not args.repos:
         parser.error('Either some package names must be specified, some --from-path or some repository names using --repos')
@@ -143,8 +134,6 @@ def main(argv=sys.argv[1:]):
     logger.setLevel(verbose_level)
 
     debug_level = logging.DEBUG if args.debug else logging.INFO
-    logger = logging.getLogger('rosinstall_generator.dry')
-    logger.setLevel(debug_level)
     logger = logging.getLogger('rosinstall_generator.wet')
     logger.setLevel(debug_level)
 
